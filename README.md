@@ -112,8 +112,6 @@ Below are representative prompts and questions from my development process, with
 | "Recommend five beginner-friendly full-stack projects that demonstrate professional software engineering skills." | Project selection and planning |
 | "Let's start with the Job Application Tracker." | Initial requirements and project setup |
 
-These prompts are examples of how AI assisted the learning and troubleshooting process, rather than a complete transcript.
-
 ### Development approach
 
 AI-generated suggestions are reviewed alongside the project code. I work through the implementation, inspect errors, and use testing to determine whether the suggested changes solve the problem.
