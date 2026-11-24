@@ -111,11 +111,6 @@ Below are representative prompts and questions from my development process, with
 |---|---|
 | "Recommend five beginner-friendly full-stack projects that demonstrate professional software engineering skills." | Project selection and planning |
 | "Let's start with the Job Application Tracker." | Initial requirements and project setup |
-| "The website wasn't updated." | Investigating development server and frontend update issues |
-| "FormEvent is crossed out." | Understanding TypeScript and React event types |
-| "I press Delete, but it doesn't delete." | Debugging application functionality |
-| "Here's my code." | Reviewing implementation and identifying a function-scope problem |
-| "How do I add this to GitHub so I can keep updating it?" | Learning Git and repository management |
 
 These prompts are examples of how AI assisted the learning and troubleshooting process, rather than a complete transcript.
 
