@@ -32,6 +32,9 @@ function App() {
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<Status>("Applied");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Status | "All">("All");
+
 
   const total = applications.length;
 
@@ -84,6 +87,19 @@ function handleStatusChange(id: string, newStatus: Status) {
   );
 }
 
+const filteredApplications = applications.filter((job) => {
+  const query = searchTerm.trim().toLowerCase();
+
+  const matchesSearch =
+    job.company.toLowerCase().includes(query) ||
+    job.position.toLowerCase().includes(query);
+
+  const matchesStatus =
+    statusFilter === "All" ||
+    job.status === statusFilter;
+
+  return matchesSearch && matchesStatus;
+});
 
   return (
     <main className="dashboard">
@@ -116,6 +132,56 @@ function handleStatusChange(id: string, newStatus: Status) {
 
       <section className="panel">
         <h2>Add New Application</h2>
+
+
+<div className="filters">
+
+  <div className="form-group">
+    <label htmlFor="search">Search Applications</label>
+
+    <input
+      id="search"
+      type="text"
+      placeholder="Search by company or position..."
+      value={searchTerm}
+      onChange={(event) =>
+        setSearchTerm(event.target.value)
+      }
+    />
+  </div>
+
+  <div className="form-group">
+    <label htmlFor="filter">Filter by Status</label>
+
+    <select
+      id="filter"
+      value={statusFilter}
+      onChange={(event) =>
+        setStatusFilter(
+          event.target.value as Status | "All"
+        )
+      }
+    >
+      <option value="All">All Statuses</option>
+      <option value="Applied">Applied</option>
+      <option value="Interview">Interview</option>
+      <option value="Offer">Offer</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+  </div>
+
+  <button
+    type="button"
+    className="clear-button"
+    onClick={() => {
+      setSearchTerm("");
+      setStatusFilter("All");
+    }}
+  >
+    Clear Filters
+  </button>
+
+</div>
 
         <form onSubmit={handleAddApplication}>
           <div className="form-group">
@@ -177,7 +243,7 @@ function handleStatusChange(id: string, newStatus: Status) {
             </thead>
 
             <tbody>
-              {applications.map((job) => (
+              {filteredApplications.map((job) => (
                 <tr key={job.id}>
                   <td>{job.company}</td>
                   <td>{job.position}</td>
@@ -217,9 +283,15 @@ function handleStatusChange(id: string, newStatus: Status) {
           </table>
         </div>
 
-        {applications.length === 0 && (
-          <p>No applications yet. Add your first one!</p>
-        )}
+        
+{filteredApplications.length === 0 && (
+  <p>
+    {applications.length === 0
+      ? "No applications yet. Add your first one!"
+      : "No applications match your search or filter."}
+  </p>
+)}
+
       </section>
     </main>
   );

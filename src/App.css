@@ -191,3 +191,43 @@ th {
 .delete-button:hover {
   background-color: #fecaca;
 }
+
+
+/* Search and Filter */
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filters .form-group {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.clear-button {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 12px 20px;
+}
+
+.clear-button:hover {
+  background-color: #d1d5db;
+}
+
+/* Mobile screens */
+
+@media (max-width: 600px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters .form-group {
+    width: 100%;
+  }
+}
