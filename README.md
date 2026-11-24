@@ -154,8 +154,8 @@ An important objective of this project is to develop the ability to understand, 
 - [x] Create the dashboard.
 - [x] Add job applications.
 - [x] Display application statistics.
-- [ ] Verify application deletion.
-- [ ] Edit application details and status.
+- [x] Verify application deletion.
+- [x] Edit application details and status.
 - [ ] Search applications.
 - [ ] Filter applications by status.
 

@@ -74,6 +74,17 @@ function App() {
   );
 }
 
+function handleStatusChange(id: string, newStatus: Status) {
+  setApplications((currentApplications) =>
+    currentApplications.map((job) =>
+      job.id === id
+        ? { ...job, status: newStatus }
+        : job
+    )
+  );
+}
+
+
   return (
     <main className="dashboard">
       <header className="dashboard-header">
@@ -170,13 +181,26 @@ function App() {
                 <tr key={job.id}>
                   <td>{job.company}</td>
                   <td>{job.position}</td>
-                  <td>
-                    <span
-                      className={`status status-${job.status.toLowerCase()}`}
-                    >
-                      {job.status}
-                    </span>
-                  </td>
+                  
+<td>
+  <select
+    className={`status status-${job.status.toLowerCase()}`}
+    aria-label={`Status for ${job.company}`}
+    value={job.status}
+    onChange={(event) =>
+      handleStatusChange(
+        job.id,
+        event.target.value as Status
+      )
+    }
+  >
+    <option value="Applied">Applied</option>
+    <option value="Interview">Interview</option>
+    <option value="Offer">Offer</option>
+    <option value="Rejected">Rejected</option>
+  </select>
+</td>
+
 
 <td>
   <button
