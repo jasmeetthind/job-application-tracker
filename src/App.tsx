@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from "react";
+import { useEffect, useState, type SubmitEvent } from "react";
 import "./App.css";
 
 type Status = "Applied" | "Interview" | "Offer" | "Rejected";
@@ -10,32 +10,47 @@ type JobApplication = {
   status: Status;
 };
 
-const startingApplications: JobApplication[] = [
-  {
-    id: "1",
-    company: "Apple",
-    position: "Software Engineer Intern",
-    status: "Applied",
-  },
-  {
-    id: "2",
-    company: "Google",
-    position: "Software Developer Intern",
-    status: "Interview",
-  },
-];
-
 function App() {
-  const [applications, setApplications] =
-    useState<JobApplication[]>(startingApplications);
+    const [applications, setApplications] =
+  useState<JobApplication[]>([]);
 
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+
+
+  
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<Status>("Applied");
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Status | "All">("All");
+  const [statusFilter, setStatusFilter] =
+    useState<Status | "All">("All");
 
+  // Fetch applications from the Express backend
+  useEffect(() => {
+    async function loadApplications() {
+      try {
+        const response = await fetch("/api/applications");
 
+        if (!response.ok) {
+          throw new Error("Failed to load applications");
+        }
+
+        const data: JobApplication[] = await response.json();
+
+        setApplications(data);
+        setError("");
+      } catch {
+        setError("Unable to connect to the backend.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void loadApplications();
+  }, []);
+
+  // Dashboard statistics
   const total = applications.length;
 
   const applied = applications.filter(
@@ -50,41 +65,103 @@ function App() {
     (job) => job.status === "Offer"
   ).length;
 
-  function handleAddApplication(event: SubmitEvent<HTMLFormElement>){
-    event.preventDefault();
+async function handleAddApplication(
+  event: SubmitEvent<HTMLFormElement>
+) {
+  event.preventDefault();
 
-    const newJob: JobApplication = {
-      id: crypto.randomUUID(),
-      company: company.trim(),
-      position: position.trim(),
-      status: status,
-    };
+  const newJob = {
+    company: company.trim(),
+    position: position.trim(),
+    status: status,
+  };
 
-    if (!newJob.company || !newJob.position) {
-      return;
+  if (!newJob.company || !newJob.position) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/applications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newJob),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add application");
     }
 
-    setApplications([...applications, newJob]);
+    const savedJob: JobApplication = await response.json();
+
+    setApplications((current) => [...current, savedJob]);
 
     setCompany("");
     setPosition("");
     setStatus("Applied");
+    setError("");
+  } catch {
+    setError("Unable to add application.");
   }
-
-  function handleDeleteApplication(id: string) {
-  setApplications((currentApplications) =>
-    currentApplications.filter((job) => job.id !== id)
-  );
 }
 
-function handleStatusChange(id: string, newStatus: Status) {
-  setApplications((currentApplications) =>
-    currentApplications.map((job) =>
-      job.id === id
-        ? { ...job, status: newStatus }
-        : job
-    )
-  );
+async function handleDeleteApplication(id: string) {
+  try {
+    const response = await fetch(
+      `/api/applications/${id}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete application");
+    }
+
+    setApplications((current) =>
+      current.filter((job) => job.id !== id)
+    );
+
+    setError("");
+  } catch {
+    setError("Unable to delete application.");
+  }
+}
+
+async function handleStatusChange(
+  id: string,
+  newStatus: Status
+) {
+  try {
+    const response = await fetch(
+      `/api/applications/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update status");
+    }
+
+    const updatedJob: JobApplication =
+      await response.json();
+
+    setApplications((current) =>
+      current.map((job) =>
+        job.id === id ? updatedJob : job
+      )
+    );
+
+    setError("");
+  } catch {
+    setError("Unable to update application status.");
+  }
 }
 
 const filteredApplications = applications.filter((job) => {
@@ -107,6 +184,16 @@ const filteredApplications = applications.filter((job) => {
         <h1>JobTrack</h1>
         <p>Manage your job applications in one place.</p>
       </header>
+
+
+{loading && <p>Loading applications...</p>}
+
+{error && (
+  <p className="error-message" role="alert">
+    {error}
+  </p>
+)}
+
 
       <section className="stats">
         <div className="stat-card">
@@ -242,49 +329,49 @@ const filteredApplications = applications.filter((job) => {
               </tr>
             </thead>
 
-            <tbody>
-              {filteredApplications.map((job) => (
-                <tr key={job.id}>
-                  <td>{job.company}</td>
-                  <td>{job.position}</td>
-                  
-<td>
-  <select
-    className={`status status-${job.status.toLowerCase()}`}
-    aria-label={`Status for ${job.company}`}
-    value={job.status}
-    onChange={(event) =>
-      handleStatusChange(
-        job.id,
-        event.target.value as Status
-      )
-    }
-  >
-    <option value="Applied">Applied</option>
-    <option value="Interview">Interview</option>
-    <option value="Offer">Offer</option>
-    <option value="Rejected">Rejected</option>
-  </select>
-</td>
+            
+<tbody>
+  {filteredApplications.map((job) => (
+    <tr key={job.id}>
+      <td>{job.company}</td>
+      <td>{job.position}</td>
 
+      <td>
+        <select
+          className={`status status-${job.status.toLowerCase()}`}
+          aria-label={`Status for ${job.company}`}
+          value={job.status}
+          onChange={(event) =>
+            handleStatusChange(
+              job.id,
+              event.target.value as Status
+            )
+          }
+        >
+          <option value="Applied">Applied</option>
+          <option value="Interview">Interview</option>
+          <option value="Offer">Offer</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </td>
 
-<td>
-  <button
-    className="delete-button"
-    onClick={() => handleDeleteApplication(job.id)}
-  >
-    Delete
-  </button>
-</td>
+      <td>
+        <button
+          type="button"
+          className="delete-button"
+          onClick={() => handleDeleteApplication(job.id)}
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
 
-                </tr>
-              ))}
-            </tbody>
           </table>
-        </div>
+        </div>    
 
-        
-{filteredApplications.length === 0 && (
+{!loading && !error && filteredApplications.length === 0 && (
   <p>
     {applications.length === 0
       ? "No applications yet. Add your first one!"

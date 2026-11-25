@@ -156,8 +156,8 @@ An important objective of this project is to develop the ability to understand, 
 - [x] Display application statistics.
 - [x] Verify application deletion.
 - [x] Edit application details and status.
-- [ ] Search applications.
-- [ ] Filter applications by status.
+- [x] Search applications.
+- [x] Filter applications by status.
 
 ### Phase 2 — Backend development
 
@@ -210,4 +210,4 @@ JobTrack is both a functional application and a learning project.
 
 My objectives are to strengthen my understanding of full-stack software engineering, gain experience with industry-standard development tools, and build a maintainable project that demonstrates technical growth.
 
-Future updates and implementation decisions will be documented through the repository's commit history
+Future updates and implementation decisions will be documented through the repository's commit history.
