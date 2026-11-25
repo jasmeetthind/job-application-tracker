@@ -161,10 +161,10 @@ An important objective of this project is to develop the ability to understand, 
 
 ### Phase 2 — Backend development
 
-- [ ] Create a Node.js and Express server.
-- [ ] Design REST API endpoints.
-- [ ] Implement CRUD operations.
-- [ ] Add backend validation and error handling.
+- [x] Create a Node.js and Express server.
+- [x] Design REST API endpoints.
+- [x] Implement CRUD operations.
+- [x] Add backend validation and error handling.
 
 ### Phase 3 — Database integration
 
