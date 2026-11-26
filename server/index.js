@@ -1,27 +1,11 @@
 import express from "express";
 import { randomUUID } from "node:crypto";
+import { pool } from "./db.js";
 
 const app = express();
 const PORT = 3001;
 
-// Allow Express to read incoming JSON data.
 app.use(express.json());
-
-// Temporary application data.
-let applications = [
-  {
-    id: "1",
-    company: "Apple",
-    position: "Software Engineer Intern",
-    status: "Applied",
-  },
-  {
-    id: "2",
-    company: "Google",
-    position: "Software Developer Intern",
-    status: "Interview",
-  },
-];
 
 const validStatuses = [
   "Applied",
@@ -30,51 +14,65 @@ const validStatuses = [
   "Rejected",
 ];
 
-// GET: Retrieve all applications.
-app.get("/api/applications", (req, res) => {
-  res.json(applications);
+// GET: Retrieve all job applications
+app.get("/api/applications", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, company, position, status
+       FROM job_applications
+       ORDER BY created_at DESC, id DESC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Unable to retrieve applications.",
+    });
+  }
 });
 
-// POST: Add a new application.
-app.post("/api/applications", (req, res) => {
+// POST: Add a job application
+app.post("/api/applications", async (req, res) => {
   const { company, position, status } = req.body ?? {};
 
   if (
     typeof company !== "string" ||
     !company.trim() ||
+    company.trim().length > 100 ||
     typeof position !== "string" ||
     !position.trim() ||
+    position.trim().length > 150 ||
     !validStatuses.includes(status)
   ) {
     return res.status(400).json({
-      error: "Please provide valid application details.",
+      error: "Invalid application details.",
     });
   }
 
-  const newJob = {
-    id: randomUUID(),
-    company: company.trim(),
-    position: position.trim(),
-    status,
-  };
+  try {
+    const id = randomUUID();
 
-  applications.push(newJob);
+    const result = await pool.query(
+      `INSERT INTO job_applications
+       (id, company, position, status)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, company, position, status`,
+      [id, company.trim(), position.trim(), status]
+    );
 
-  res.status(201).json(newJob);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Unable to add application.",
+    });
+  }
 });
 
-// PATCH: Update an application's status.
-app.patch("/api/applications/:id", (req, res) => {
-  const job = applications.find(
-    (item) => item.id === req.params.id
-  );
-
-  if (!job) {
-    return res.status(404).json({
-      error: "Application not found.",
-    });
-  }
-
+// PATCH: Update application status
+app.patch("/api/applications/:id", async (req, res) => {
+  const { id } = req.params;
   const newStatus = req.body?.status;
 
   if (!validStatuses.includes(newStatus)) {
@@ -83,31 +81,72 @@ app.patch("/api/applications/:id", (req, res) => {
     });
   }
 
-  job.status = newStatus;
+  try {
+    const result = await pool.query(
+      `UPDATE job_applications
+       SET status = $1
+       WHERE id = $2
+       RETURNING id, company, position, status`,
+      [newStatus, id]
+    );
 
-  res.json(job);
-});
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Application not found.",
+      });
+    }
 
-// DELETE: Remove an application.
-app.delete("/api/applications/:id", (req, res) => {
-  const index = applications.findIndex(
-    (job) => job.id === req.params.id
-  );
-
-  if (index === -1) {
-    return res.status(404).json({
-      error: "Application not found.",
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Unable to update application.",
     });
   }
-
-  applications.splice(index, 1);
-
-  res.status(204).send();
 });
 
-// Start the backend server.
-app.listen(PORT, () => {
-  console.log(
-    `JobTrack backend running at http://localhost:${PORT}`
-  );
+// DELETE: Remove an application
+app.delete("/api/applications/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM job_applications
+       WHERE id = $1
+       RETURNING id`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Application not found.",
+      });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Unable to delete application.",
+    });
+  }
 });
+
+// Verify database connection before starting the server
+async function startServer() {
+  try {
+    await pool.query("SELECT 1");
+
+    app.listen(PORT, () => {
+      console.log(
+        `JobTrack backend running at http://localhost:${PORT}`
+      );
+      console.log("PostgreSQL connected successfully!");
+    });
+  } catch (error) {
+    console.error("Failed to connect to PostgreSQL:", error);
+    process.exit(1);
+  }
+}
+
+void startServer();
