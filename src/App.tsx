@@ -1,5 +1,6 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import "./App.css";
+import { filterApplications } from "./filterApplications";
 
 type Status = "Applied" | "Interview" | "Offer" | "Rejected";
 
@@ -164,19 +165,11 @@ async function handleStatusChange(
   }
 }
 
-const filteredApplications = applications.filter((job) => {
-  const query = searchTerm.trim().toLowerCase();
-
-  const matchesSearch =
-    job.company.toLowerCase().includes(query) ||
-    job.position.toLowerCase().includes(query);
-
-  const matchesStatus =
-    statusFilter === "All" ||
-    job.status === statusFilter;
-
-  return matchesSearch && matchesStatus;
-});
+const filteredApplications = filterApplications(
+  applications,
+  searchTerm,
+  statusFilter
+);
 
   return (
     <main className="dashboard">
