@@ -16,6 +16,8 @@ The project was created to gain practical experience with modern software engine
 My goal is to develop this application incrementally while applying software engineering concepts and documenting my development process.
 
 ## 2. Technologies Used
+- **Vitest**
+- **Supertest**
 
 ### Currently implemented
 
