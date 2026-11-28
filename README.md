@@ -1,4 +1,5 @@
 # JobTrack — Job Application Tracker
+![JobTrack CI](https://github.com/jasmeetthind/job-application-tracker/actions/workflows/ci.yml/badge.svg)
 
 A job application management dashboard built with **React, TypeScript, and Vite**, designed to help job seekers organize and monitor their applications throughout the recruitment process.
 
