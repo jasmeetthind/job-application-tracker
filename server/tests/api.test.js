@@ -19,6 +19,7 @@ describe("JobTrack API authentication", () => {
         position: "Software Engineer",
         status: "Applied",
       });
+      
 
     expect(response.status).toBe(401);
   });
