@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 
-const api = request("http://localhost:3001");
+const api = request("http://127.0.0.1:3001");
 
 describe("JobTrack API authentication", () => {
 
@@ -19,7 +19,7 @@ describe("JobTrack API authentication", () => {
         position: "Software Engineer",
         status: "Applied",
       });
-      
+
 
     expect(response.status).toBe(401);
   });

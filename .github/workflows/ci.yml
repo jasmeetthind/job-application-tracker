@@ -1,0 +1,115 @@
+name: JobTrack CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend Tests and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+  backend:
+    name: Backend API Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: jobtrack_ci
+          POSTGRES_PASSWORD: ci_test_password_only
+          POSTGRES_DB: jobtrack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobtrack_ci -d jobtrack_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: jobtrack_ci
+      PGPASSWORD: ci_test_password_only
+      PGDATABASE: jobtrack_test
+      SESSION_SECRET: ci_only_session_secret_not_for_production_12345
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Create database tables
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+          psql -v ON_ERROR_STOP=1 -f server/schema.sql
+          psql -v ON_ERROR_STOP=1 -f server/auth_migration.sql
+
+      - name: Start backend and run tests
+        working-directory: server
+        run: |
+          node index.js > /tmp/jobtrack.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          ready=0
+
+          for attempt in {1..30}; do
+            status=$(curl -s -o /dev/null \
+              -w "%{http_code}" \
+              http://127.0.0.1:3001/api/auth/me || true)
+
+            if [ "$status" = "401" ]; then
+              ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/jobtrack.log
+            exit 1
+          fi
+
+          npm test
